@@ -38,12 +38,16 @@ class SegmentDataset(torch.utils.data.Dataset):
 
         with open(original, 'rb') as f:
             image = Image.open(f)
+            image = crop_to_square(image)
+            image = resize_image(image, 512, antialias=True)
             image = image.convert('RGB')
         if self.transform is not None:
             image = self.transform(image)
 
         with open(segmented, 'rb') as f:
             label = Image.open(f)
+            label = crop_to_square(label)
+            label = resize_image(label, 512, antialias=True)
             label.convert('P')
             label = np.asarray(label)
             label = np.where(label == 255, 22-1, label)
@@ -59,6 +63,19 @@ class SegmentDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.original_images)
     
+def crop_to_square(image):
+    size = min(image.size)
+    left, upper = (image.width - size) // 2, (image.height - size) // 2
+    right, bottom = (image.width + size) // 2, (image.height + size) // 2
+    return image.crop((left, upper, right, bottom))
+
+def resize_image(image, to_size, antialias = False):
+    if image.size != to_size:
+        if antialias:
+            image = image.resize((to_size, to_size), Image.LANCZOS)
+        else:
+            image = image.resize((to_size, to_size))
+    return image
 
 data_transforms = transforms.Compose([
     transforms.ToTensor()
@@ -93,7 +110,6 @@ for epoch in range(num_epochs):
     with tqdm(train_loader, ncols=100) as pbar:
         for i, (images, labels) in enumerate(pbar):
             images, labels = images.to(device), labels.to(device)
-            
             optimizer.zero_grad()
             outputs = net(images)
             loss = criterion(outputs, labels.long())

@@ -33,7 +33,8 @@ class Unet(nn.Module):
 
 		self.out = nn.Sequential(
 			nn.Conv2d(self.num_filter,self.out_dim,3,1,1),
-			nn.Tanh(),
+			#nn.Tanh(),
+			nn.LogSoftmax(dim=1),
 		)
 
 	def forward(self,input):
@@ -57,6 +58,8 @@ class Unet(nn.Module):
 		concat_2 = torch.cat([trans_2,down_3],dim=1)
 		up_2 = self.up_2(concat_2)
 		trans_3 = self.trans_3(up_2)
+		print(trans_3.size())
+		print(down_2.size())
 		concat_3 = torch.cat([trans_3,down_2],dim=1)
 		up_3 = self.up_3(concat_3)
 		trans_4 = self.trans_4(up_3)
