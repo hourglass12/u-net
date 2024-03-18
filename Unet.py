@@ -49,6 +49,8 @@ class Unet(nn.Module):
 		bridge = self.bridge(pool_4)
 
 		trans_1 = self.trans_1(bridge)
+		print(trans_1)
+		print(down_4)
 		concat_1 = torch.cat([trans_1,down_4],dim=1)
 		up_1 = self.up_1(concat_1)
 		trans_2 = self.trans_2(up_1)
